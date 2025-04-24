@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class RagdollHitListener : MonoBehaviour
 {
-    private cowboy cowboyScript;
+    private Cowboy cowboyScript;
 
-    public void Init(cowboy cowboy)
+    public void Init(Cowboy cowboy)
     {
         cowboyScript = cowboy;
     }

@@ -119,6 +119,54 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &144901904
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 144901906}
+  - component: {fileID: 144901905}
+  m_Layer: 0
+  m_Name: CowboySpawer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &144901905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144901904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b7d4335f861e184ea764b051d55368e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cowboyPrefab: {fileID: 1643781441}
+  spawnPoint: {fileID: 1694250095}
+  maxCowboys: 1
+--- !u!4 &144901906
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144901904}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.916866, y: 0.41789734, z: -4.92104}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1694250095}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &299639867
 GameObject:
   m_ObjectHideFlags: 0
@@ -422,27 +470,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.11
+      value: 0.110000014
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 0.000002700227
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.124809936
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.9921807
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -450,7 +498,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 165.66
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -2356,27 +2404,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4383571534958525452, guid: 611c9fdd315327345a187217b5cfeb7a, type: 3}
   m_PrefabInstance: {fileID: 2105153921}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &1643781442
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1643781441}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Size: {x: 0.30874518, y: 0.9610074, z: 0.19119434}
-  m_Center: {x: -0.006723076, y: 0.46488282, z: 0.00603699}
 --- !u!114 &1643781447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2391,7 +2418,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hatTransform: {fileID: 657177278}
   hatRigidbody: {fileID: 657177281}
+  walkSpeed: 1
   camera: {fileID: 984255178}
+  spawner: {fileID: 0}
 --- !u!114 &1643781448
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2429,7 +2458,38 @@ CharacterController:
   m_StepOffset: 0.1
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0
-  m_Center: {x: 0, y: 0.5, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1694250094
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1694250095}
+  m_Layer: 0
+  m_Name: spawnpoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1694250095
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1694250094}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.05, y: -0.42789733, z: -15.149}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 144901906}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1773298356
 GameObject:
   m_ObjectHideFlags: 0
@@ -3780,7 +3840,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4007715181966075574, guid: 611c9fdd315327345a187217b5cfeb7a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.59
+      value: -7.21
       objectReference: {fileID: 0}
     - target: {fileID: 4007715181966075574, guid: 611c9fdd315327345a187217b5cfeb7a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3812,7 +3872,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4383571534958525452, guid: 611c9fdd315327345a187217b5cfeb7a, type: 3}
       propertyPath: m_Name
-      value: CowboyNHat (1)
+      value: RagdollCowboy
       objectReference: {fileID: 0}
     - target: {fileID: 4383571534958525452, guid: 611c9fdd315327345a187217b5cfeb7a, type: 3}
       propertyPath: m_TagString
@@ -3830,9 +3890,6 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4383571534958525452, guid: 611c9fdd315327345a187217b5cfeb7a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1643781442}
     - targetCorrespondingSourceObject: {fileID: 4383571534958525452, guid: 611c9fdd315327345a187217b5cfeb7a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1643781447}
@@ -4037,3 +4094,4 @@ SceneRoots:
   - {fileID: 2105153921}
   - {fileID: 648105963867988006}
   - {fileID: 2070171645}
+  - {fileID: 144901906}

@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System.Collections;
 
-public class cowboy : MonoBehaviour, IHittable
+public class Cowboy : MonoBehaviour, IHittable
 {
     private enum State
     {
@@ -16,8 +16,12 @@ public class cowboy : MonoBehaviour, IHittable
     private Animator animator;
     [SerializeField] private Transform hatTransform;
     [SerializeField] private Rigidbody hatRigidbody;
+    [SerializeField] private float walkSpeed = 0f;
+    private CharacterController controller;
     [SerializeField] private Camera camera;
     private State currentState = State.Walking;
+    public CowboySpawner spawner; // public so it can be assigned at runtime
+
 
     void Awake()
     {
@@ -25,6 +29,7 @@ public class cowboy : MonoBehaviour, IHittable
 
         rigidbodies = GetComponentsInChildren<Rigidbody>();
         animator = GetComponent<Animator>();
+        controller = GetComponent<CharacterController>(); // <-- add this
         DisableRagdoll();
     }
 
@@ -56,10 +61,16 @@ public class cowboy : MonoBehaviour, IHittable
             hatRigidbody.AddTorque(Vector3.up * 10f, ForceMode.Impulse);
         }
 
-        Debug.Log("Ragdoll + Hat launched!");
+        StartCoroutine(NotifyDeathCoroutine());
     }
 
-        void DisableRagdoll()
+    private IEnumerator NotifyDeathCoroutine()
+    {
+        yield return new WaitForSeconds(3f); // Let the ragdoll play out
+        spawner?.OnCowboyDied(gameObject);
+    }
+
+    void DisableRagdoll()
     {
         foreach (var rb in rigidbodies)
         {
@@ -78,16 +89,22 @@ public class cowboy : MonoBehaviour, IHittable
         if (animator != null) animator.enabled = true;
     }
 
-    void WalkingBehavior()
-    {
-        Vector3 direction = camera.transform.position - transform.position;
-        direction.y = 0;
-        direction.Normalize();
+    //void WalkingBehavior()
+    //{
+    //    Vector3 direction = camera.transform.position - transform.position;
+    //    direction.y = 0;
+    //    direction.Normalize();
 
-        Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 20 * Time.deltaTime);
-        
-    }
+    //    Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+    //    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 20 * Time.deltaTime);
+
+    //    Vector3 moveVector = transform.forward * walkSpeed;
+
+    //    //transform.position += transform.forward * 1.5f * Time.deltaTime;
+    //    controller.Move(moveVector * Time.deltaTime);
+
+
+    //}
 
     void RunningBehavior()
     {
@@ -98,15 +115,26 @@ public class cowboy : MonoBehaviour, IHittable
         }
     }
 
+    void WalkingBehavior()
+    {
+        Vector3 direction = camera.transform.position - transform.position;
+        direction.y = 0;
+        direction.Normalize();
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 20 * Time.deltaTime);
+
+        Vector3 moveVector = transform.forward * walkSpeed;
+        controller.Move(moveVector * Time.deltaTime);
+
+        animator.SetBool("isWalking", true); // Animate walking
+    }
+
     void IdleBehavior()
     {
-        if (currentState != State.Idle)
-        {
-            currentState = State.Idle;
-            animator.SetBool("isWalking", false);
-            animator.SetBool("isRunning", false);
-        }
+        animator.SetBool("isWalking", false); // Animate idle
     }
+
 
     void RagdollBehavior()
     {
@@ -120,6 +148,22 @@ public class cowboy : MonoBehaviour, IHittable
 
     void Update()
     {
+        float distanceToCamera = Vector3.Distance(transform.position, camera.transform.position);
+
+        if (currentState != State.Ragdoll)
+        {
+            if (distanceToCamera > 2.5f)
+            {
+                currentState = State.Walking;
+            }
+            else
+            {
+                currentState = State.Idle;
+                Debug.Log("Current State: " + currentState);
+
+            }
+        }
+
         switch (currentState)
         {
             case State.Idle:
@@ -135,5 +179,7 @@ public class cowboy : MonoBehaviour, IHittable
                 RagdollBehavior();
                 break;
         }
+
     }
+
 }
