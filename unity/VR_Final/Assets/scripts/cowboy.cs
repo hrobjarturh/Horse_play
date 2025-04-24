@@ -1,12 +1,23 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
+using System.Collections;
 
 public class cowboy : MonoBehaviour, IHittable
 {
+    private enum State
+    {
+        Idle,
+        Walking,
+        Running,
+        Ragdoll
+    }
     private Rigidbody[] rigidbodies;
     private Animator animator;
     [SerializeField] private Transform hatTransform;
     [SerializeField] private Rigidbody hatRigidbody;
+    [SerializeField] private Camera camera;
+    private State currentState = State.Walking;
 
     void Awake()
     {
@@ -65,5 +76,64 @@ public class cowboy : MonoBehaviour, IHittable
         }
 
         if (animator != null) animator.enabled = true;
+    }
+
+    void WalkingBehavior()
+    {
+        Vector3 direction = camera.transform.position - transform.position;
+        direction.y = 0;
+        direction.Normalize();
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 20 * Time.deltaTime);
+        
+    }
+
+    void RunningBehavior()
+    {
+        if (currentState != State.Running)
+        {
+            currentState = State.Running;
+            animator.SetBool("isRunning", true);
+        }
+    }
+
+    void IdleBehavior()
+    {
+        if (currentState != State.Idle)
+        {
+            currentState = State.Idle;
+            animator.SetBool("isWalking", false);
+            animator.SetBool("isRunning", false);
+        }
+    }
+
+    void RagdollBehavior()
+    {
+        if (currentState != State.Ragdoll)
+        {
+            currentState = State.Ragdoll;
+            animator.SetBool("isWalking", false);
+            animator.SetBool("isRunning", false);
+        }
+    }
+
+    void Update()
+    {
+        switch (currentState)
+        {
+            case State.Idle:
+                IdleBehavior();
+                break;
+            case State.Walking:
+                WalkingBehavior();
+                break;
+            case State.Running:
+                RunningBehavior();
+                break;
+            case State.Ragdoll:
+                RagdollBehavior();
+                break;
+        }
     }
 }
