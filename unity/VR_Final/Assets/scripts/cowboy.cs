@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Cowboy : MonoBehaviour, IHittable
 {
@@ -17,9 +17,20 @@ public class Cowboy : MonoBehaviour, IHittable
     private Animator animator;
     [SerializeField] private Transform hatTransform;
     [SerializeField] private Rigidbody hatRigidbody;
-    [SerializeField] private float walkSpeed = 0f;
+
+    [Header("Movement Speeds")]
+    [SerializeField] private float walkSpeed = 2f;
+    [SerializeField] private float runSpeed = 2f;
+
+    [Header("Distance Thresholds")]
+    [Tooltip("Distance from camera at which to start walking")]
+    [SerializeField] private float walkDistance = .50f;
+    [Tooltip("Distance from camera at which to start running")]
+    [SerializeField] private float runDistance = 2f;
+
     private CharacterController controller;
     [SerializeField] private Camera camera;
+
     private State currentState = State.Walking;
     public CowboySpawner spawner;
 
@@ -74,39 +85,57 @@ public class Cowboy : MonoBehaviour, IHittable
             if (col != null) col.enabled = true;
             rb.isKinematic = true;
         }
-
         if (animator != null) animator.enabled = true;
     }
-
-    void WalkingBehavior()
-    {
-        animator.SetBool("isWalking", true);
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-
-        // then your usual check...
-        if (!animator.IsInTransition(0)
-            && state.IsName("Walking")
-            && state.normalizedTime >= 0.1f)
-        {
-
-            //log the state
-            Vector3 direction = camera.transform.position - transform.position;
-            direction.y = 0;
-            direction.Normalize();
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 20 * Time.deltaTime);
-
-            Vector3 moveVector = transform.forward * walkSpeed;
-            controller.Move(moveVector * Time.deltaTime);
-            
-        }
-    }
-    
 
     void IdleBehavior()
     {
         animator.SetBool("isWalking", false);
+        animator.SetBool("isRunning", false);
+    }
+
+    void WalkingBehavior()
+    {
+        animator.SetBool("isRunning", false);
+        animator.SetBool("isWalking", true);
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        if (!animator.IsInTransition(0)
+            && state.IsName("Walking")
+            && state.normalizedTime >= 0.1f)
+        {
+            MoveTowardsCamera(walkSpeed);
+        }
+    }
+
+    void RunningBehavior()
+    {
+        animator.SetBool("isWalking", false);
+        animator.SetBool("isRunning", true);
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        if (!animator.IsInTransition(0)
+            && state.IsName("Running")
+            && state.normalizedTime >= 0.1f)
+        {
+            MoveTowardsCamera(runSpeed);
+        }
+    }
+
+    private void MoveTowardsCamera(float speed)
+    {
+        Vector3 dir = camera.transform.position - transform.position;
+        dir.y = 0;
+        dir.Normalize();
+
+        Quaternion targetRot = Quaternion.LookRotation(dir, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(
+            transform.rotation,
+            targetRot,
+            20f * Time.deltaTime
+        );
+
+        controller.Move(transform.forward * speed * Time.deltaTime);
     }
 
     void RagdollBehavior()
@@ -123,22 +152,32 @@ public class Cowboy : MonoBehaviour, IHittable
     {
         if (currentState != State.Ragdoll)
         {
-            float distanceToCamera = Vector3.Distance(transform.position, camera.transform.position);
-            currentState = distanceToCamera > 2.5f ? State.Walking : State.Idle;
+            float dist = Vector3.Distance(transform.position, camera.transform.position);
+
+
+            if (dist <= 1.1f)
+            {
+                // Player caught!
+                UIManager.Instance.ShowDeathScreen();
+                // Optionally, disable further movement:
+                enabled = false;
+                return;
+            }
+
+            if (dist > runDistance)
+                currentState = State.Running;
+            else if (dist > walkDistance)
+                currentState = State.Walking;
+            else
+                currentState = State.Idle;
         }
 
         switch (currentState)
         {
-            case State.Idle:
-                IdleBehavior();
-                break;
-            case State.Walking:
-                WalkingBehavior();
-                break;
-            case State.Ragdoll:
-                RagdollBehavior();
-                break;
+            case State.Idle: IdleBehavior(); break;
+            case State.Walking: WalkingBehavior(); break;
+            case State.Running: RunningBehavior(); break;
+            case State.Ragdoll: RagdollBehavior(); break;
         }
     }
 }
-
