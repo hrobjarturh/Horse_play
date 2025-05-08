@@ -1,186 +1,183 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.InputSystem; // Make sure this is here if you used Option 1 for input
 
-// Ensures the GameObject has an Animator component
 [RequireComponent(typeof(Animator))]
-public class CowboySequenceController : MonoBehaviour // Changed class name for clarity
+public class CowboySequenceController : MonoBehaviour
 {
     // --- Configuration ---
     [Header("Movement")]
-    [Tooltip("How fast the character moves forward (units per second).")]
     [SerializeField] private float moveSpeed = 1.5f;
-
-    [Tooltip("Assign an empty GameObject in the scene marking the final destination.")]
     [SerializeField] private Transform targetSpot;
-
-    [Tooltip("How close the character needs to be to the targetSpot to stop.")]
     [SerializeField] private float stoppingDistance = 0.5f;
-
-    [Tooltip("How far from the targetSpot the 'OpenDoor' animation should trigger.")]
     [SerializeField] private float distanceToOpenDoor = 5.0f;
 
     [Header("Animation Parameters (Triggers)")]
-    [Tooltip("Name of the Trigger parameter in the Animator to start walking.")]
     [SerializeField] private string walkTriggerName = "Walk";
-
-    [Tooltip("Name of the Trigger parameter for the door opening animation.")]
     [SerializeField] private string openDoorTriggerName = "OpenDoor";
-
-    [Tooltip("Name of the Trigger parameter to transition from walking to idle.")]
     [SerializeField] private string stopWalkTriggerName = "StopWalk";
-    // Idle state is assumed to be reached automatically after the stop animation
 
-    // --- State ---
     private enum SequenceState
     {
-        NotStarted,
+        Idle,
         PerformingSequence,
-        Idle // Sequence completed
     }
-    private SequenceState currentState = SequenceState.NotStarted;
+    private SequenceState currentState = SequenceState.Idle;
 
-    // --- Components ---
     private Animator animator;
-
-    // --- Coroutine Reference ---
+    private Rigidbody rb;
     private Coroutine activeSequenceCoroutine = null;
 
     void Awake()
     {
         animator = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody>();
 
-        // Validate essential references
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
         if (targetSpot == null)
         {
-            Debug.LogError("Target Spot is not assigned in the Inspector for the Cowboy!", this);
-            enabled = false; // Disable this script if target is missing
-            return;
+            Debug.LogError("TARGET SPOT NOT ASSIGNED!", this);
+            enabled = false; return;
         }
         if (animator == null)
         {
-             Debug.LogError("Animator component not found on the Cowboy!", this);
-             enabled = false; // Disable this script if Animator is missing
-             return;
+             Debug.LogError("ANIMATOR NOT FOUND!", this);
+             enabled = false; return;
         }
+        currentState = SequenceState.Idle;
+        Debug.Log("AWAKE: Cowboy starting in Idle state.");
     }
 
-    void Start()
-    {
-        // Automatically start the sequence when the game begins
-        StartEntrySequence();
-    }
-
-    // Public method to potentially restart the sequence if needed later
     public void StartEntrySequence()
     {
-        // Prevent starting if already running
-        if (currentState == SequenceState.PerformingSequence && activeSequenceCoroutine != null)
+        // --- LOG 1 ---
+        Debug.Log($"START_ENTRY_SEQUENCE: Called. Current State: {currentState}");
+
+        if (currentState != SequenceState.Idle)
         {
-            Debug.LogWarning("Sequence already running.");
+            Debug.LogWarning($"START_ENTRY_SEQUENCE: Cannot start, current state is {currentState}. Bailing.");
             return;
         }
-
-        // Stop any previous coroutine just in case
-        if(activeSequenceCoroutine != null)
+        if (activeSequenceCoroutine != null)
         {
+             Debug.LogWarning("START_ENTRY_SEQUENCE: Previous coroutine was active. Stopping it.");
             StopCoroutine(activeSequenceCoroutine);
         }
 
-        // Begin the sequence
         currentState = SequenceState.PerformingSequence;
+        // --- LOG 2 ---
+        Debug.Log("START_ENTRY_SEQUENCE: State changed to PerformingSequence. Starting coroutine.");
         activeSequenceCoroutine = StartCoroutine(PerformEntrySequenceCoroutine());
     }
 
-
-    // --- Main Sequence Coroutine ---
     private IEnumerator PerformEntrySequenceCoroutine()
     {
-        Debug.Log("Starting Entry Sequence...");
-
-        // --- Phase 1: Initial Walk ---
-        Debug.Log("Phase 1: Walking towards door area");
+        // --- LOG 3 ---
+        Debug.Log("COROUTINE: Started. Setting '" + walkTriggerName + "' trigger.");
         animator.SetTrigger(walkTriggerName);
+        yield return new WaitForSeconds(0.1f); // Small delay to allow transition
 
-        // Walk until close enough to the target to trigger the door open part
+        // --- LOG 4 ---
+        Debug.Log("COROUTINE: Initial Walk Phase starting.");
         while (Vector3.Distance(transform.position, targetSpot.position) > distanceToOpenDoor)
         {
+            if (currentState != SequenceState.PerformingSequence)
+            {
+                // --- LOG 5 ---
+                Debug.LogWarning("COROUTINE: State no longer PerformingSequence during initial walk. Exiting coroutine.");
+                yield break;
+            }
             MoveTowardsTarget();
-            yield return null; // Wait for the next frame
+            yield return null;
         }
+        // --- LOG 6 ---
+        Debug.Log("COROUTINE: Initial Walk Phase ended (or distanceToOpenDoor met).");
 
-        // Optional check: If we started too close or overshot, skip door open and go straight to stopping
+
         if (Vector3.Distance(transform.position, targetSpot.position) <= stoppingDistance)
         {
-            Debug.Log("Reached stopping distance early, skipping door open and triggering StopWalk.");
+             // --- LOG 7 ---
+            Debug.Log("COROUTINE: Reached stopping distance early.");
         }
         else
         {
-            // --- Phase 2: Walking Door Open ---
-            Debug.Log("Phase 2: Triggering Open Door animation");
+            // --- LOG 8 ---
+            Debug.Log("COROUTINE: Door Open Phase. Setting '" + openDoorTriggerName + "' trigger.");
             animator.SetTrigger(openDoorTriggerName);
-            // We assume the Animator transitions back to Walking automatically after this state finishes.
-            // Continue moving during this phase.
-            Debug.Log("Continuing movement during/after door open animation");
 
-            // --- Phase 3: Walk Again (After Door, if needed) ---
-            // Continue walking until the final stopping distance is reached
-             Debug.Log("Phase 3: Walking final distance");
+            // --- LOG 9 ---
+            Debug.Log("COROUTINE: Final Walk Phase starting.");
              while (Vector3.Distance(transform.position, targetSpot.position) > stoppingDistance)
              {
+                if (currentState != SequenceState.PerformingSequence)
+                {
+                    // --- LOG 10 ---
+                    Debug.LogWarning("COROUTINE: State no longer PerformingSequence during final walk. Exiting coroutine.");
+                    yield break;
+                }
                 MoveTowardsTarget();
-                yield return null; // Wait for the next frame
+                yield return null;
              }
+            // --- LOG 11 ---
+            Debug.Log("COROUTINE: Final Walk Phase ended (stoppingDistance met).");
         }
 
-        // --- Phase 4: Stop Walking ---
-        Debug.Log("Phase 4: Reached target, triggering Stop Walk animation");
+        // --- LOG 12 ---
+        Debug.Log("COROUTINE: Stop Phase. Setting '" + stopWalkTriggerName + "' trigger.");
         animator.SetTrigger(stopWalkTriggerName);
-        // Stop physical movement here. The Animator plays the stop animation.
 
-        // --- Phase 5: Idle ---
-        // Wait a brief moment for the Animator to likely settle into the Idle state.
-        // A more robust method checks animator.GetCurrentAnimatorStateInfo, but this is simpler.
-        yield return new WaitForSeconds(0.2f);
+        // --- LOG 13 ---
+        // Wait for approximately the length of the current animator state (should be "Stopping")
+        // This is a rough estimate and might need adjustment or a more robust check
+        float currentClipLength = 0f;
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        // It's possible the transition to "Stopping" hasn't fully happened yet when this line is hit.
+        // A small fixed delay might be more reliable if the state name check is tricky.
+        // For now, let's use a fixed delay after setting the stop trigger.
+        // if(animator.HasState(0, Animator.StringToHash("Stopping"))) // More robust check
+        // {
+        //    currentClipLength = stateInfo.length;
+        // }
+        // else
+        // {
+        //    currentClipLength = 1.0f; // Default if "Stopping" state isn't immediately identified
+        // }
+        // Debug.Log($"COROUTINE: Waiting for stop animation to finish (approx {currentClipLength}s). Current state: {stateInfo.fullPathHash}");
+        yield return new WaitForSeconds(1.5f); // Adjust this fixed delay based on your "Stopping" animation length
 
-        Debug.Log("Sequence Complete. Switching to Idle state.");
+
+        // --- LOG 14 ---
+        Debug.Log("COROUTINE: Sequence Complete. Setting state to Idle.");
         currentState = SequenceState.Idle;
-        activeSequenceCoroutine = null; // Coroutine finished
+        activeSequenceCoroutine = null;
     }
 
-    // --- Helper Movement Function ---
     void MoveTowardsTarget()
     {
-        // Calculate direction towards target, ignoring vertical difference
         Vector3 direction = targetSpot.position - transform.position;
         direction.y = 0;
-
-        // Check if we are already very close to avoid unnecessary calculations/rotation
-        if (direction.sqrMagnitude < 0.01f) // Use squared magnitude for efficiency
-        {
-            return;
-        }
-
-        // Rotate towards the target direction
+        if (direction.sqrMagnitude < 0.01f) return;
         Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-        // Slerp or RotateTowards can be used. RotateTowards is often more predictable for constant speed.
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 200 * Time.deltaTime); // Adjust rotation speed as needed
-
-        // Move the character forward in its local Z direction
-        transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 200 * Time.deltaTime);
+        transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime, Space.Self);
     }
 
-    // --- Update Loop ---
-    // The Update loop is now very simple. It doesn't need to do anything once the
-    // sequence starts, as the coroutine handles everything until completion.
-    // You could add logic here for what happens *after* the sequence (in the Idle state).
     void Update()
     {
         if (currentState == SequenceState.Idle)
         {
-            // Character is now idle. Add any idle behavior here if needed.
-            // For example, slightly rotate to look around, etc.
-            // If no further action is needed, this can remain empty.
+            // Using New Input System
+            if (Keyboard.current != null && Keyboard.current.gKey.wasPressedThisFrame)
+            {
+                // --- LOG 0 ---
+                Debug.Log("UPDATE: 'G' Key Pressed (Input System). CurrentState: " + currentState);
+                StartEntrySequence();
+            }
         }
-        // No action needed during PerformingSequence, the coroutine handles it.
     }
 }
