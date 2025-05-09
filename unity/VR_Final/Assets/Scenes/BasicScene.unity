@@ -1584,7 +1584,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 6546807954727079398, guid: acade0303f90be84cb6c74445def39f7, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: -7029948723529949830, guid: acade0303f90be84cb6c74445def39f7, type: 3}
@@ -2698,6 +2699,7 @@ MonoBehaviour:
   bullet: {fileID: 311737917284478949, guid: cade80c7f0d5cd6468eef6214cddde53, type: 3}
   firePoint: {fileID: 1773298357}
   bulletSpeed: 10
+  gunshotSound: {fileID: 8300000, guid: f1ec84d52604b41648b48b8ed1fd0738, type: 3}
 --- !u!114 &1474566901
 MonoBehaviour:
   m_ObjectHideFlags: 0
