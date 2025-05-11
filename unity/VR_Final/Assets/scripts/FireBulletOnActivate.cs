@@ -1,5 +1,6 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit; // Ensure this namespace is present
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class FireBulletOnActivate : MonoBehaviour
 {
@@ -7,53 +8,72 @@ public class FireBulletOnActivate : MonoBehaviour
     public Transform firePoint;
     public float bulletSpeed = 20f;
 
-    // --- MODIFICATION START ---
-    [Header("Sound Effects")] // Optional: to organize in Inspector
-    [SerializeField] private AudioClip gunshotSound; // Assign your gunshot sound clip in the Inspector
-    private AudioSource audioSource;
-    // --- MODIFICATION END ---
+    // REMOVED: Header("Sound Effects"), gunshotSound AudioClip, and local audioSource
+    // Sound will be played via SoundManager
 
-    private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
+    private XRGrabInteractable grabInteractable;
+    private bool gunPickedUpForFirstTime = false;
 
     void Awake()
     {
-        grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-        grabInteractable.activated.AddListener(FireBullet);
-
-        // --- MODIFICATION START ---
-        // Get or add an AudioSource component
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
+        grabInteractable = GetComponent<XRGrabInteractable>();
+        if (grabInteractable == null)
         {
-            // If no AudioSource exists on this GameObject, add one
-            audioSource = gameObject.AddComponent<AudioSource>();
+            Debug.LogError("XRGrabInteractable not found on this GameObject.", this);
+            enabled = false;
+            return;
         }
-        // Optional: Configure AudioSource settings if needed (e.g., spatialBlend for 3D sound)
-        // audioSource.spatialBlend = 1.0f; // Makes sound 3D
-        // audioSource.playOnAwake = false; // We'll trigger it manually
-        // --- MODIFICATION END ---
+        grabInteractable.activated.AddListener(FireBullet);
+        grabInteractable.selectEntered.AddListener(OnGunPickedUp);
+
+        // REMOVED: Local AudioSource setup
+        // audioSource = GetComponent<AudioSource>();
+        // ...
+    }
+
+    private void OnGunPickedUp(SelectEnterEventArgs args)
+    {
+        if (!gunPickedUpForFirstTime)
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.PlayerPickedUpGun();
+                gunPickedUpForFirstTime = true;
+                Debug.Log("Gun picked up by player, signaling Game Manager to start the game.");
+            }
+            else
+            {
+                Debug.LogError("GameManager Instance not found. Cannot start game via gun pickup.");
+            }
+        }
+    }
+    
+    void OnDestroy()
+    {
+        if (grabInteractable != null)
+        {
+            grabInteractable.activated.RemoveListener(FireBullet);
+            grabInteractable.selectEntered.RemoveListener(OnGunPickedUp);
+        }
     }
 
     void FireBullet(ActivateEventArgs args)
     {
+        // Optionally check game state:
+        // if (!GameManager.IsGamePlaying) return; // Or IsGameEffectivelyStarted
+
         GameObject spawnedBullet = Instantiate(bullet, firePoint.position, firePoint.rotation);
         spawnedBullet.GetComponent<Rigidbody>().linearVelocity = firePoint.forward * bulletSpeed;
         Destroy(spawnedBullet, 5f);
 
-        // --- MODIFICATION START ---
-        // Play the gunshot sound
-        if (gunshotSound != null && audioSource != null)
+        // Play gunshot sound via SoundManager
+        if (SoundManager.Instance != null)
         {
-            audioSource.PlayOneShot(gunshotSound);
+            SoundManager.Instance.PlayGunshotSound(firePoint.position);
         }
-        else if (gunshotSound == null)
+        else
         {
-            Debug.LogWarning("Gunshot sound clip not assigned in FireBulletOnActivate.");
+            Debug.LogWarning("FireBulletOnActivate: SoundManager.Instance not found. Cannot play gunshot sound.");
         }
-        else // audioSource is null, though Awake should have handled it
-        {
-            Debug.LogWarning("AudioSource component not found on the gun.");
-        }
-        // --- MODIFICATION END ---
     }
 }
