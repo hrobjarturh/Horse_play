@@ -1,12 +1,16 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class CowboySpawner : MonoBehaviour
 {
-    [SerializeField] private GameObject cowboyPrefab; // THIS MUST BE A PREFAB FROM YOUR PROJECT ASSETS
-    [SerializeField] private Transform spawnPoint;
-    [SerializeField] private int maxCowboys = 8;
+    [SerializeField] private GameObject cowboyPrefab;
+
+    [Header("Spawn Points")]
+    [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
+
+    [Header("Spawn Area Radius (around selected spawn point)")]
     [SerializeField] private float spawnRadiusX = 5f;
     [SerializeField] private float spawnRadiusZ = 5f;
 
@@ -34,18 +38,19 @@ public class CowboySpawner : MonoBehaviour
             Debug.LogWarningFormat(this, "CowboyPrefab '{0}' in CowboySpawner appears to be a scene object, not a Project Asset. This can cause issues when the original is modified (e.g., ragdolled). Please assign a prefab from your Project window.", cowboyPrefab.name);
         }
 
-
-        if (spawnPoint == null)
+        if (spawnPoints == null || spawnPoints.Count == 0)
         {
-            // Debug.LogWarning("SpawnPoint not assigned in CowboySpawner. Using Spawner's position.", this);
-            spawnPoint = this.transform;
+            Debug.LogWarning("SpawnPoints list is empty in CowboySpawner. Using this GameObject's position as the only spawn point.", this);
+            if (spawnPoints == null) spawnPoints = new List<Transform>();
+            spawnPoints.Add(this.transform);
         }
+
 
         if (GameManager.Instance != null)
         {
             if (GameManager.HasInitialGunBeenPickedUp()) // Check if gun was ALREADY picked up
             {
-                HandleGunPickedUpEvent(); // Renamed for clarity
+                HandleGunPickedUpEvent();
             }
             else
             {
@@ -63,51 +68,57 @@ public class CowboySpawner : MonoBehaviour
     {
         if (GameManager.Instance != null)
         {
-            // --- MODIFICATION ---
             GameManager.OnGunPickedUpToStart -= HandleGunPickedUpEvent;
-            // --- END MODIFICATION ---
         }
         StopAllCoroutines(); // Stop any pending spawns
     }
 
-    // --- MODIFICATION: Renamed for clarity ---
     private void HandleGunPickedUpEvent()
     {
         if (initialSpawnDone || !this.enabled) return;
-        // Debug.Log("CowboySpawner: Game Started signal received. Initiating cowboy spawn.");
+
         initialSpawnDone = true;
-        StartCoroutine(SpawnInitialCowboys());
         
-        // --- MODIFICATION: Unsubscribe after handling ---
+        // Get initial max cowboys from GameManager instead of fixed 8
+        int initialSpawnCount = Mathf.Min(GameManager.Instance.CurrentMaxCowboys, 8); // Still maybe cap initial for flow? Or just use GM value directly?
+        StartCoroutine(SpawnInitialCowboys(initialSpawnCount));
+
+
         if (GameManager.Instance != null)
         {
              GameManager.OnGunPickedUpToStart -= HandleGunPickedUpEvent;
         }
-        // --- END MODIFICATION ---
     }
 
-    private IEnumerator SpawnInitialCowboys()
+    private IEnumerator SpawnInitialCowboys(int count)
     {
-        // Debug.Log("CowboySpawner: Starting SpawnInitialCowboys coroutine.");
-        int initialSpawnCount = Mathf.Min(maxCowboys, 8);
-        for (int i = 0; i < initialSpawnCount; i++)
+        // Debug.Log($"CowboySpawner: Starting SpawnInitialCowboys coroutine for {count} cowboys.");
+        for (int i = 0; i < count; i++)
         {
-            if (!this.enabled || activeCowboys.Count >= maxCowboys) break; // Stop if spawner disabled or max reached
+            // Check if spawner disabled, game over, or max reached (using GameManager's current max)
+            if (!this.enabled || !GameManager.IsGameEffectivelyStarted || activeCowboys.Count >= GameManager.Instance.CurrentMaxCowboys) break; 
             
             SpawnCowboy();
-            yield return new WaitForSeconds(Random.Range(1.0f, 2.5f)); 
+            // Use GameManager's initial delay values
+            yield return new WaitForSeconds(Random.Range(GameManager.Instance.CurrentMinSpawnDelay, GameManager.Instance.CurrentMaxSpawnDelay)); 
         }
     }
+
 
     void SpawnCowboy()
     {
-        // --- MODIFICATION ---
-        if (!this.enabled || !GameManager.HasInitialGunBeenPickedUp() || activeCowboys.Count >= maxCowboys)
-        // --- OLD ---
-        // if (!this.enabled || !GameManager.IsGameStarted || activeCowboys.Count >= maxCowboys)
+        if (!this.enabled || !GameManager.IsGameEffectivelyStarted || activeCowboys.Count >= GameManager.Instance.CurrentMaxCowboys)
         {
             return;
         }
+
+        if (spawnPoints == null || spawnPoints.Count == 0)
+        {
+             Debug.LogError("CowboySpawner: No valid spawn points available!");
+             return;
+        }
+        Transform selectedSpawnPoint = spawnPoints[Random.Range(0, spawnPoints.Count)];
+
 
         Vector3 potentialSpawnPosition = Vector3.zero;
         bool foundClearSpot = false;
@@ -119,7 +130,8 @@ public class CowboySpawner : MonoBehaviour
                 0f, // Assuming spawn is on a flat plane relative to spawnPoint's y
                 Random.Range(-spawnRadiusZ, spawnRadiusZ)
             );
-            potentialSpawnPosition = spawnPoint.position + randomOffset;
+            potentialSpawnPosition = selectedSpawnPoint.position + randomOffset;
+
             Vector3 checkCenter = potentialSpawnPosition + (Vector3.up * spawnCheckHeightOffset);
 
             if (!Physics.CheckSphere(checkCenter, spawnCheckRadius, obstacleLayer, QueryTriggerInteraction.Ignore))
@@ -131,17 +143,20 @@ public class CowboySpawner : MonoBehaviour
 
         if (!foundClearSpot)
         {
-            // Debug.LogWarning($"CowboySpawner: Could not find a clear spawn position near {spawnPoint.name} after {maxSpawnAttempts} attempts.", this);
+            // Debug.LogWarning($"CowboySpawner: Could not find a clear spawn position near {selectedSpawnPoint.name} after {maxSpawnAttempts} attempts.", this);
             return;
         }
 
-        GameObject cowboyInstance = Instantiate(cowboyPrefab, potentialSpawnPosition, spawnPoint.rotation);
-        // cowboyInstance.name = cowboyPrefab.name + "_" + (activeCowboys.Count + 1); // Optional: for easier debugging
+        GameObject cowboyInstance = Instantiate(cowboyPrefab, potentialSpawnPosition, selectedSpawnPoint.rotation); // Instantiate using selected point's rotation
 
         Cowboy cowboyScript = cowboyInstance.GetComponent<Cowboy>();
         if (cowboyScript != null)
         {
             cowboyScript.spawner = this;
+            if (GameManager.Instance != null)
+            {
+                 cowboyScript.SetSpeedMultiplier(GameManager.Instance.CurrentCowboySpeedMultiplier);
+            }
             activeCowboys.Add(cowboyInstance);
             // Debug.Log($"Cowboy spawned: {cowboyInstance.name}. Active cowboys: {activeCowboys.Count}");
         }
@@ -162,7 +177,7 @@ public class CowboySpawner : MonoBehaviour
             // Debug.LogWarning($"Cowboy {cowboyGameObject.name} reported dead but not found in active list. It might have already been processed or destroyed.", this);
             if (cowboyGameObject != null && cowboyGameObject.scene.IsValid()) // Check if it's a valid scene object still
             {
-                 // Destroy(cowboyGameObject); // Destroy it if it's orphaned
+                 // Destroy(cowboyGameObject);
             }
             return;
         }
@@ -171,26 +186,19 @@ public class CowboySpawner : MonoBehaviour
         if (removed)
         {
             // Debug.Log($"Cowboy {cowboyGameObject.name} died and removed from active list. Active count: {activeCowboys.Count}");
-            // The Cowboy script's OnDestroy will handle destroying its hat.
-            // The Cowboy GameObject itself is destroyed here or by its own NotifyDeath if no spawner.
-            // Let's ensure it's destroyed here since the spawner is notified.
             Destroy(cowboyGameObject); 
             
-            if (GameManager.IsGameEffectivelyStarted && activeCowboys.Count < maxCowboys && this.enabled)
-            // --- OLD ---
-            // if (GameManager.IsGameStarted && activeCowboys.Count < maxCowboys && this.enabled)
+            if (GameManager.IsGameEffectivelyStarted && activeCowboys.Count < GameManager.Instance.CurrentMaxCowboys && this.enabled)
             {
-                StartCoroutine(DelayedSpawn(Random.Range(2.0f, 4.0f)));
+                StartCoroutine(DelayedSpawn(Random.Range(GameManager.Instance.CurrentMinSpawnDelay, GameManager.Instance.CurrentMaxSpawnDelay)));
             }
         }
-        // No 'else' needed here as the Contains check above handles the "not in list" case.
     }
 
     IEnumerator DelayedSpawn(float delay)
     {
         yield return new WaitForSeconds(delay);
-        // --- MODIFICATION ---
-        if (this.enabled && GameManager.IsGameEffectivelyStarted && activeCowboys.Count < maxCowboys)
+        if (this.enabled && GameManager.IsGameEffectivelyStarted && activeCowboys.Count < GameManager.Instance.CurrentMaxCowboys)
         {
             SpawnCowboy();
         }

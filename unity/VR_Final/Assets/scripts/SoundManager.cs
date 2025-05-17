@@ -1,4 +1,3 @@
-// SoundManager.cs
 using UnityEngine;
 using System.Linq; // Required for FirstOrDefault
 
@@ -38,7 +37,6 @@ public class SoundManager : MonoBehaviour
 
     void Start()
     {
-        // Stop music initially to ensure it only starts on the correct event
         if (themeMusicAudioSource != null && themeMusicAudioSource.isPlaying)
         {
             themeMusicAudioSource.Stop();
@@ -48,30 +46,20 @@ public class SoundManager : MonoBehaviour
         {
             SubscribeToGameEvents();
 
-            // If SoundManager starts *after* the game has already started or ended,
-            // catch up to the correct music state.
             if (GameManager.Instance.IsCurrentlyGameOver)
             {
-                // Game is over, music should be at game over volume (might be playing or stopped)
                 HandlePlayerDied();
-                // If it was supposed to be playing but isn't (e.g. after scene reload and SoundManager Start),
-                // and game was already started before game over.
-                if(GameManager.HasInitialGunBeenPickedUp()){ // Ensures gun was picked up before game over
+                if(GameManager.HasInitialGunBeenPickedUp()){ 
                      PlayThemeMusic(gameOverThemeVolume);
                 }
             }
-            else if (GameManager.IsGameEffectivelyStarted) // Game has started (gun picked up) but not game over
+            else if (GameManager.IsGameEffectivelyStarted)
             {
-                // Game has already started, so theme music should be playing.
                 PlayThemeMusic(defaultThemeVolume);
             }
-            // If IsCurrentlyPreGame, music should NOT be playing yet.
-            // It will be triggered by HandleGameActuallyStarted.
         }
         else
         {
-            // If GameManager is not ready, music won't play yet.
-            // It will be handled by event subscriptions once GameManager is available.
             Debug.LogWarning("SoundManager: GameManager.Instance not found in Start. Theme music will await game events.");
         }
     }
@@ -83,8 +71,8 @@ public class SoundManager : MonoBehaviour
 
     private void SubscribeToGameEvents()
     {
-        GameManager.OnGamePreStart += HandleGamePreStart; // Still useful for stopping music on restart
-        GameManager.OnGameActuallyStarted += HandleGameActuallyStarted; // THIS will start the theme
+        GameManager.OnGamePreStart += HandleGamePreStart;
+        GameManager.OnGameActuallyStarted += HandleGameActuallyStarted;
         GameManager.OnPlayerDied += HandlePlayerDied;
     }
 
@@ -118,7 +106,7 @@ public class SoundManager : MonoBehaviour
         }
 
         themeMusicAudioSource.loop = true;
-        themeMusicAudioSource.playOnAwake = false; // Ensure it doesn't play automatically
+        themeMusicAudioSource.playOnAwake = false;
         if (themeMusicClip != null)
         {
             if (themeMusicAudioSource.clip != themeMusicClip)
@@ -134,16 +122,12 @@ public class SoundManager : MonoBehaviour
 
     private void HandleGamePreStart()
     {
-        // This event signifies the game is resetting (e.g., after a restart).
-        // We should ensure the theme music is stopped here, as it should only start
-        // when the gun is picked up via OnGameActuallyStarted.
         Debug.Log("SoundManager: GamePreStart event received. Stopping theme music if playing.");
         StopThemeMusic();
     }
     
     private void HandleGameActuallyStarted()
     {
-        // This is when the gun is picked up. START the theme music here.
         Debug.Log("SoundManager: GameActuallyStarted event received. Playing theme music.");
         PlayThemeMusic(defaultThemeVolume);
     }
@@ -153,24 +137,14 @@ public class SoundManager : MonoBehaviour
         Debug.Log("SoundManager: PlayerDied event received. Adjusting theme volume for game over.");
         if (themeMusicAudioSource != null)
         {
-            // If music wasn't playing because game over happened before gun pickup somehow,
-            // don't start it now. Only adjust volume if it was supposed to be playing.
             if (themeMusicAudioSource.isPlaying)
             {
                 themeMusicAudioSource.volume = gameOverThemeVolume;
             }
             else if (GameManager.HasInitialGunBeenPickedUp())
             {
-                // If game had started (gun picked up) but music somehow stopped (unlikely with loop),
-                // play it at game over volume.
                 PlayThemeMusic(gameOverThemeVolume);
             }
-
-            // If volume is 0, you might consider pausing or stopping fully:
-            // if (gameOverThemeVolume <= 0.001f && themeMusicAudioSource.isPlaying)
-            // {
-            //     themeMusicAudioSource.Pause(); // or StopThemeMusic();
-            // }
         }
     }
 

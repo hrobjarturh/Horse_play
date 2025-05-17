@@ -360,8 +360,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cowboyPrefab: {fileID: 1829351847459462432, guid: 3b1e2391bb8054c079a8ced2c5345951, type: 3}
-  spawnPoint: {fileID: 1694250095}
-  maxCowboys: 5
+  spawnPoints: []
   spawnRadiusX: 5
   spawnRadiusZ: 5
   obstacleLayer:
@@ -379,7 +378,7 @@ Transform:
   m_GameObject: {fileID: 144901904}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.916866, y: 0.41789734, z: -4.92104}
+  m_LocalPosition: {x: -11.22, y: 0, z: -19.09}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2027,6 +2026,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f3f13d3162804a65b1aa230cda21fc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  difficultyIncreaseInterval: 30
+  maxCowboysIncreasePerInterval: 1
+  minSpawnDelayDecreasePerInterval: 0.2
+  maxSpawnDelayDecreasePerInterval: 0.3
+  cowboySpeedMultiplierIncreasePerInterval: 0.1
+  maxMaxCowboysLimit: 20
+  minSpawnDelayLimit: 1
+  maxSpawnDelayLimit: 2
+  maxCowboySpeedMultiplier: 2
+  initialMaxCowboys: 8
+  initialMinSpawnDelay: 2
+  initialMaxSpawnDelay: 4
+  initialCowboySpeedMultiplier: 1
 --- !u!4 &933098603
 Transform:
   m_ObjectHideFlags: 0

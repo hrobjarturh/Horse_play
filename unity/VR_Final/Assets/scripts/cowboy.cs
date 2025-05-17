@@ -23,8 +23,12 @@ public class Cowboy : MonoBehaviour, IHittable
     private GameObject detachedHatInstance = null;
 
     [Header("Movement Speeds")]
-    [SerializeField] private float walkSpeed = 2f;
-    [SerializeField] private float runSpeed = 4f;
+    [SerializeField] private float baseWalkSpeed = 2f; // Base walk speed
+    [SerializeField] private float baseRunSpeed = 4f; // Base run speed
+    private float speedMultiplier = 1.0f; // Default multiplier
+
+    private float effectiveWalkSpeed;
+    private float effectiveRunSpeed;
 
     [Header("Distance Thresholds")]
     [SerializeField] private float walkDistance = 0.50f;
@@ -32,21 +36,14 @@ public class Cowboy : MonoBehaviour, IHittable
 
     [SerializeField] private Camera gameCamera;
     private State currentState = State.PreGame;
-    public CowboySpawner spawner;
+    public CowboySpawner spawner; // Set by the spawner
     private bool isRagdolling = false;
     private bool localGameHasStarted = false;
-
-    // REMOVED: AudioSource and AudioClip for deathSound are now handled by SoundManager
 
     void Awake()
     {
         animator = GetComponent<Animator>();
         controller = GetComponent<CharacterController>();
-
-        // REMOVED: Local AudioSource setup block
-        // --- NEW AUDIO ADDITION: Get or add AudioSource ---
-        // ...
-        // --- END NEW AUDIO ADDITION ---
 
         if (gameCamera == null)
         {
@@ -60,6 +57,11 @@ public class Cowboy : MonoBehaviour, IHittable
 
         if (GameManager.Instance != null)
         {
+             if (GameManager.IsGameEffectivelyStarted)
+             {
+                 SetSpeedMultiplier(GameManager.Instance.CurrentCowboySpeedMultiplier);
+             }
+
             if (GameManager.HasInitialGunBeenPickedUp())
             {
                 HandleGameActuallyStartedLogic();
@@ -99,6 +101,7 @@ public class Cowboy : MonoBehaviour, IHittable
         
         if (controller != null) controller.enabled = true;
         if (animator != null) animator.enabled = true; 
+        if (animator != null) animator.speed = speedMultiplier; 
 
         if (GameManager.Instance != null)
         {
@@ -106,12 +109,31 @@ public class Cowboy : MonoBehaviour, IHittable
         }
     }
 
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        speedMultiplier = Mathf.Max(1.0f, multiplier);
+        effectiveWalkSpeed = baseWalkSpeed * speedMultiplier;
+        effectiveRunSpeed = baseRunSpeed * speedMultiplier;
+
+        if (animator != null)
+        {
+            animator.speed = speedMultiplier; 
+        }
+        // Debug.Log($"{gameObject.name}: Set Speed Multiplier to {speedMultiplier:F2}. Effective Run Speed: {effectiveRunSpeed:F2}");
+    }
+
+
     void InitializeCowboyState()
     {
         isRagdolling = false;
         detachedHatInstance = null;
         localGameHasStarted = false;
         currentState = State.PreGame;
+
+        speedMultiplier = 1.0f; // Reset multiplier
+        effectiveWalkSpeed = baseWalkSpeed;
+        effectiveRunSpeed = baseRunSpeed;
+
 
         if (animator == null) animator = GetComponent<Animator>();
         if (controller == null) controller = GetComponent<CharacterController>();
@@ -168,6 +190,7 @@ public class Cowboy : MonoBehaviour, IHittable
             animator.Update(0f); 
             animator.SetBool("isWalking", false);
             animator.SetBool("isRunning", false);
+            animator.speed = 1.0f; 
         }
     }
 
@@ -188,7 +211,6 @@ public class Cowboy : MonoBehaviour, IHittable
     {
         if (isRagdolling || !this.enabled) return;
 
-        // Play death sound via SoundManager
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayCowboyDeathSound(transform.position);
@@ -268,6 +290,7 @@ public class Cowboy : MonoBehaviour, IHittable
         {
             animator.SetBool("isWalking", false);
             animator.SetBool("isRunning", false);
+            animator.speed = 1.0f; 
         }
         if (controller != null) controller.enabled = false;
     }
@@ -278,6 +301,7 @@ public class Cowboy : MonoBehaviour, IHittable
         {
             animator.SetBool("isWalking", false);
             animator.SetBool("isRunning", false);
+            animator.speed = speedMultiplier; 
         }
     }
 
@@ -287,13 +311,14 @@ public class Cowboy : MonoBehaviour, IHittable
         {
             animator.SetBool("isRunning", false);
             animator.SetBool("isWalking", true);
+            animator.speed = speedMultiplier; 
         }
         if (controller != null && controller.enabled && animator != null && animator.enabled)
         {
             AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
             if (!animator.IsInTransition(0) && (stateInfo.IsName("Walking") || stateInfo.IsTag("Walk")) && stateInfo.normalizedTime >= 0.05f) 
             {
-                MoveTowardsCamera(walkSpeed);
+                MoveTowardsCamera(effectiveWalkSpeed); 
             }
         }
     }
@@ -304,13 +329,14 @@ public class Cowboy : MonoBehaviour, IHittable
         {
             animator.SetBool("isWalking", false);
             animator.SetBool("isRunning", true);
+            animator.speed = speedMultiplier; 
         }
         if (controller != null && controller.enabled && animator != null && animator.enabled)
         {
             AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
              if (!animator.IsInTransition(0) && (stateInfo.IsName("Running") || stateInfo.IsTag("Run")) && stateInfo.normalizedTime >= 0.05f) 
             {
-                MoveTowardsCamera(runSpeed);
+                MoveTowardsCamera(effectiveRunSpeed); 
             }
         }
     }
@@ -331,13 +357,12 @@ public class Cowboy : MonoBehaviour, IHittable
         if (controller.enabled)
         {
             controller.Move(transform.forward * speed * Time.deltaTime);
-            // NOTE: We will apply the Y-position fix in LateUpdate for better stability.
         }
     }
 
     void RagdollBehavior()
     {
-        // Ragdoll is mostly physics-driven.
+        if (animator != null && animator.enabled) animator.enabled = false;
     }
 
     void Update()
@@ -359,6 +384,7 @@ public class Cowboy : MonoBehaviour, IHittable
         if (gameCamera == null) 
         {
             if (controller) controller.enabled = false;
+             if (animator) animator.speed = 1.0f;
             return;
         }
             
@@ -374,14 +400,13 @@ public class Cowboy : MonoBehaviour, IHittable
                 UIManager.Instance.NotifyPlayerReachedByCowboy();
             }
             if (controller) controller.enabled = false;
-            // Keep animator enabled for idle pose, but don't play walk/run
             if (animator) {
                 animator.SetBool("isWalking", false);
                 animator.SetBool("isRunning", false);
+                animator.speed = speedMultiplier;
             }
-            currentState = State.Idle; // Ensure state is Idle
-            // IdleBehavior(); // Call IdleBehavior to set animator bools correctly.
-            return; // Stop further state changes and movement updates
+            currentState = State.Idle;
+            return; 
         }
 
 
@@ -395,6 +420,8 @@ public class Cowboy : MonoBehaviour, IHittable
 
         if (controller != null && controller.enabled && animator != null && animator.enabled)
         {
+            // animator.speed = speedMultiplier;
+
             switch (currentState)
             {
                 case State.Idle:    IdleBehavior(); break;
@@ -404,11 +431,10 @@ public class Cowboy : MonoBehaviour, IHittable
         }
         else if (controller != null && !controller.enabled && localGameHasStarted && !isRagdolling)
         {
-            IdleBehavior();
+            IdleBehavior(); // Ensure idle animation/speed is set even if controller is off
         }
     }
 
-    // +++ ADDED FIX BELOW +++
     void LateUpdate()
     {
         // This fix applies when the cowboy is active (not ragdolled, and not in the pre-game state).
@@ -426,6 +452,11 @@ public class Cowboy : MonoBehaviour, IHittable
                 transform.position = new Vector3(currentPosition.x, targetYPosition, currentPosition.z);
             }
         }
+        // This might be redundant but helps catch edge cases.
+        // Only apply if animator is enabled and not ragdolling/pregame.
+        if (animator != null && animator.enabled && !isRagdolling && currentState != State.PreGame)
+        {
+             animator.speed = speedMultiplier;
+        }
     }
-    // +++ END OF ADDED FIX +++
 }

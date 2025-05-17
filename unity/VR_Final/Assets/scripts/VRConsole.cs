@@ -1,9 +1,9 @@
 using UnityEngine;
-using TMPro; // or using UnityEngine.UI if you're not using TMP
+using TMPro;
 
 public class VRConsole : MonoBehaviour
 {
-    public TextMeshProUGUI consoleText; // or Text if using legacy UI
+    public TextMeshProUGUI consoleText;
     private string logOutput = "";
 
     void OnEnable()
