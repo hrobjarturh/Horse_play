@@ -9,11 +9,38 @@ Will you survive the **Showdown at Sundown**?
 
 ## 🗂️ Project Structure
 
+Horse_play/
+├── blender/                     # Blender source assets: models, textures, rigs, animations
+│
+├── unity/
+│   └── VR_Final/                # Main Unity project directory
+│       ├── Assets/             # Core game assets: scenes, prefabs, scripts, shaders, etc.
+│       ├── build.apk           # Android APK build for Meta Quest 2 (example output)
+│       ├── Library/            # Unity-generated cache (excluded from version control)
+│       ├── Logs/               # Editor logs and crash reports
+│       ├── Packages/           # Package manifest and dependency configuration
+│       ├── ProjectSettings/    # Project-wide Unity settings (input, tags, layers, etc.)
+│       ├── UserSettings/       # Per-user editor settings (not shared)
+│       ├── *.csproj            # Unity-generated C# project files
+│       ├── *.sln               # Unity solution file
+│       └── UpgradeLog.htm      # Unity upgrade log
+│
+├── README.md                   # Project documentation
+
+### 📁 Folder Descriptions
+
 - **`blender/`**  
   Contains all assets created in Blender including character models (e.g., cowboy), animation cycles (idle, walking, running), props, and environment elements like the saloon.
 
-- **`unity/`**  
+- **`unity/VR_Final/`**  
   Unity project that integrates Blender assets into the game environment. This is the main development folder and should be opened with **Unity Editor 6000.0.40f1 (Intel)**.
+
+
+- **Notable files/folders inside `VR_Final/`:**
+  - `Assets/`: Core content of the game.
+  - `build.apk`: Example Android build output (for Meta Quest 2).
+  - `ProjectSettings/`: Contains configuration for rendering, input, and XR.
+  - `*.csproj` / `*.sln`: Unity-generated build system files.
 
 ---
 
