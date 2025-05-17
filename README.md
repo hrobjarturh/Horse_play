@@ -1,6 +1,10 @@
-# 🤠 Horse Play: A Western VR Experience
+# 🤠 Showdown at Sundown
 
-Welcome to **Horse Play**, a VR mini-game set in the Wild West, designed for **Meta Quest 2** using **Unity** and **Blender**. 
+**Showdown at Sundown** is an immersive VR mini-game set in a stylized Western world, designed for the **Meta Quest 2**. Crafted with custom low-poly assets modeled, textured, and animated in Blender, the game offers an atmospheric and performance-optimized experience built in Unity.
+
+Players begin their journey at a tense Western town, learning movement and interaction mechanics at their own pace. But peace doesn’t last long—soon, they’re thrust into a desperate fight for survival. As angry townspeople spawn and swarm from all directions, players must hold their ground and fend off the growing mob before they’re caught and hanged.
+
+Will you survive the **Showdown at Sundown**?
 ---
 
 ## 🗂️ Project Structure
