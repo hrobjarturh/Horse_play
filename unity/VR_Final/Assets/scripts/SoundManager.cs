@@ -15,7 +15,9 @@ public class SoundManager : MonoBehaviour
 
     [Header("Sound Effects")]
     [SerializeField] private AudioClip gunshotSoundClip;
+    [SerializeField] private AudioClip gunCockingSoundClip;
     [SerializeField] private AudioClip cowboyDeathSoundClip;
+    [SerializeField] private AudioClip gunReloadSoundClip;
     [SerializeField] [Range(0f, 1f)] private float sfxVolume = 0.8f; // Global SFX volume
 
     void Awake()
@@ -211,12 +213,18 @@ public class SoundManager : MonoBehaviour
     public void PlayGunshotSound(Vector3 position)
     {
         if (gunshotSoundClip == null) Debug.LogWarning("SoundManager: GunshotSoundClip not assigned in Inspector. Cannot play gunshot sound.", this);
-        PlaySFXAtPoint(gunshotSoundClip, position, sfxVolume);
+        PlaySFXAtPoint(gunshotSoundClip, position, 1.5f * sfxVolume);
+        PlaySFXAtPoint(gunCockingSoundClip, position, sfxVolume);
     }
 
     public void PlayCowboyDeathSound(Vector3 position)
     {
         if (cowboyDeathSoundClip == null) Debug.LogWarning("SoundManager: CowboyDeathSoundClip not assigned in Inspector. Cannot play cowboy death sound.", this);
-        PlaySFXAtPoint(cowboyDeathSoundClip, position, sfxVolume);
+        PlaySFXAtPoint(cowboyDeathSoundClip, position, 1.5f * sfxVolume);
+    }
+
+    public void PlayReloadSound(Vector3 position){
+        if (gunReloadSoundClip == null) Debug.LogWarning("SoundManager: gunReloadSoundClip not assigned in Inspector. Cannot play reload sound.", this);
+        PlaySFXAtPoint(gunReloadSoundClip, position, sfxVolume);
     }
 }

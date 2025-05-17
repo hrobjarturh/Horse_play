@@ -7,12 +7,12 @@ public class FireBulletOnActivate : MonoBehaviour
     public GameObject bullet;
     public Transform firePoint;
     public float bulletSpeed = 20f;
-
-    // REMOVED: Header("Sound Effects"), gunshotSound AudioClip, and local audioSource
-    // Sound will be played via SoundManager
+    public float shotDelay = 10f;
 
     private XRGrabInteractable grabInteractable;
     private bool gunPickedUpForFirstTime = false;
+    private float nextShotTime = 0f;
+    private int shotCount = 0;
 
     void Awake()
     {
@@ -25,10 +25,6 @@ public class FireBulletOnActivate : MonoBehaviour
         }
         grabInteractable.activated.AddListener(FireBullet);
         grabInteractable.selectEntered.AddListener(OnGunPickedUp);
-
-        // REMOVED: Local AudioSource setup
-        // audioSource = GetComponent<AudioSource>();
-        // ...
     }
 
     private void OnGunPickedUp(SelectEnterEventArgs args)
@@ -47,7 +43,7 @@ public class FireBulletOnActivate : MonoBehaviour
             }
         }
     }
-    
+
     void OnDestroy()
     {
         if (grabInteractable != null)
@@ -59,21 +55,28 @@ public class FireBulletOnActivate : MonoBehaviour
 
     void FireBullet(ActivateEventArgs args)
     {
-        // Optionally check game state:
-        // if (!GameManager.IsGamePlaying) return; // Or IsGameEffectivelyStarted
+        if (Time.time < nextShotTime) return;
 
         GameObject spawnedBullet = Instantiate(bullet, firePoint.position, firePoint.rotation);
         spawnedBullet.GetComponent<Rigidbody>().linearVelocity = firePoint.forward * bulletSpeed;
-        Destroy(spawnedBullet, 5f);
+        Destroy(spawnedBullet, 3f);
 
-        // Play gunshot sound via SoundManager
+        shotCount++;
+        nextShotTime = Time.time + shotDelay;
+
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayGunshotSound(firePoint.position);
+
+            if (shotCount % 6 == 0)
+            {
+                SoundManager.Instance.PlayReloadSound(firePoint.position);
+                nextShotTime = 3f;
+            }
         }
         else
         {
-            Debug.LogWarning("FireBulletOnActivate: SoundManager.Instance not found. Cannot play gunshot sound.");
+            Debug.LogWarning("FireBulletOnActivate: SoundManager.Instance not found. Cannot play sounds.");
         }
     }
 }
