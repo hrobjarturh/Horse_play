@@ -5,15 +5,18 @@ TagManager:
   serializedVersion: 3
   tags:
   - Anchor
+  - Enemy
+  - Bullet
+  - Pistol
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Bullet
   - Water
   - UI
-  - 
-  - 
+  - cowboyLayer
+  - Obstacles
   - 
   - 
   - 

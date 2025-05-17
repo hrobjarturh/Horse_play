@@ -2546,7 +2546,7 @@
                     "name": "Submit",
                     "type": "Button",
                     "id": "eba98c2e-6268-4233-bb88-946287bc753c",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2601,6 +2601,15 @@
                     "type": "PassThrough",
                     "id": "533aeb95-18b2-4a83-a69d-f6e0be72ff8a",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RIGHT",
+                    "type": "Button",
+                    "id": "46231c66-a30f-40d5-a8c3-7825125d74ed",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2972,6 +2981,17 @@
                 },
                 {
                     "name": "",
+                    "id": "02ce7c8d-078e-44d8-b10d-f082f133cfe4",
+                    "path": "<OculusTouchController>/primaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Submit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "67f51768-1493-4444-b118-82d398a16fdd",
                     "path": "*/{Cancel}",
                     "interactions": "",
@@ -2989,6 +3009,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Click",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "58eb8be5-8b23-4023-80e8-e6244bf9cd58",
+                    "path": "<OculusTouchController>/primaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RIGHT",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
